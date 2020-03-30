@@ -11,7 +11,9 @@ import UIKit
 
 class MemeCell: UITableViewCell {
     @IBOutlet private var label: UILabel!
-    @IBOutlet private var picture: UIImageView!
+    @IBOutlet private var picture: ScalingUIImageView!
+
+    static var viewController: UIViewController?
 
     override func prepareForReuse() {
         super.prepareForReuse()
@@ -19,9 +21,26 @@ class MemeCell: UITableViewCell {
         picture.kf.cancelDownloadTask()
     }
 
-    func setup(with meme: Post) {
+    func setup(with meme: Post, controller: ViewController, index: IndexPath) {
+
+//        self.viewController = controller
+
         label.text = meme.title
         guard let url = meme.images?[0].url else { return }
-        picture.kf.setImage(with: url)
+        let tmpImage = self.picture.image
+        picture.kf.setImage(with: url) { result in
+            // `result` is either a `.success(RetrieveImageResult)` or a `.failure(KingfisherError)`
+            switch result {
+            case .success(let value):
+                print(value.cacheType)
+                if value.cacheType == .disk {
+                    controller.updateCell(row: index.row, section: index.section)
+                } else {
+                    print("уже есть")
+                }
+            case .failure(let error):
+                print(error) // The error happens
+            }
+        }
     }
 }
